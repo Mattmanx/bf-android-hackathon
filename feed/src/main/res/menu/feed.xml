@@ -1,0 +1,19 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.bluefletch.internal.feed.FeedActivity" >
+
+    <item android:id="@+id/action_refresh"
+        android:title="@string/action_refresh"
+        android:showAsAction="always"
+        android:icon="@android:drawable/ic_menu_rotate"/>
+
+    <item android:id="@+id/action_logout"
+        android:title="@string/action_logout"
+        android:showAsAction="always"
+        android:icon="@android:drawable/ic_menu_revert"/>
+
+    <item android:id="@+id/action_settings"
+        android:title="@string/action_settings"
+        android:orderInCategory="100"
+        android:showAsAction="never" />
+</menu>
