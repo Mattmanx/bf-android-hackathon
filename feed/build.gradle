@@ -21,5 +21,6 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     compile 'com.squareup.retrofit:retrofit:1.5.0'
+    compile 'com.joanzapata.android:android-iconify:1.+'
 
 }

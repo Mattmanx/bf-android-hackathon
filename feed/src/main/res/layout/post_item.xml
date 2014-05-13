@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent" android:layout_height="match_parent"
+    android:padding="10dp"
+    android:longClickable="false">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/profilePicturePost"
+        android:background="@android:color/transparent"
+        android:baselineAlignBottom="false"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:cropToPadding="false"
+        android:clickable="false"
+        android:adjustViewBounds="true"
+        android:minHeight="50dp"
+        android:minWidth="50dp"
+        android:longClickable="true"
+        android:maxHeight="50dp"
+        android:maxWidth="50dp"
+        android:scaleType="center" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="User Name"
+        android:id="@+id/userNamePost"
+        android:layout_toRightOf="@+id/profilePicturePost"
+        android:layout_marginLeft="30dp"
+        android:phoneNumber="false"
+        android:textColor="#000000" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="0 hours ago"
+        android:id="@+id/timeStampPost"
+        android:textColor="#000000"
+        android:layout_below="@+id/userNamePost"
+        android:layout_alignStart="@+id/userNamePost"
+        android:layout_marginTop="2dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Placeholder"
+        android:id="@+id/postText"
+        android:layout_below="@+id/timeStampPost"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:paddingTop="1dp"
+        android:textColor="#000000" />
+</RelativeLayout>

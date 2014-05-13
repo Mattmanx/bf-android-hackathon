@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,10 +15,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.os.Build;
+import android.widget.ListView;
+import android.widget.Toast;
 
 import com.bluefletch.internal.feed.rest.FeedRequestInterceptor;
 import com.bluefletch.internal.feed.rest.FeedService;
 import com.bluefletch.internal.feed.rest.Post;
+import com.joanzapata.android.iconify.IconDrawable;
+import com.joanzapata.android.iconify.Iconify;
 
 import java.util.List;
 
@@ -54,19 +60,7 @@ public class FeedActivity extends Activity {
 
         feedService = restAdapter.create(FeedService.class);
 
-        feedService.feed(null, new Callback<List<Post>>() {
-            @Override
-            public void success(List<Post> posts, Response response) {
-                Log.i(TAG, "Received " + posts.size() + " posts from the feed service.");
-
-                //TODO: Do stuff here!
-            }
-
-            @Override
-            public void failure(RetrofitError retrofitError) {
-                Log.e(TAG, "There was an error retrieving posts from the feed.");
-            }
-        });
+        refreshFeed();
     }
 
     @Override
@@ -95,6 +89,21 @@ public class FeedActivity extends Activity {
         
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.feed, menu);
+
+        menu.findItem(R.id.action_logout).setIcon(
+                new IconDrawable(this, Iconify.IconValue.fa_sign_out)
+                        .colorRes(android.R.color.holo_blue_light)
+                        .actionBarSize());
+
+        menu.findItem(R.id.action_refresh).setIcon(
+                new IconDrawable(this, Iconify.IconValue.fa_refresh)
+                        .colorRes(android.R.color.holo_blue_light)
+                        .actionBarSize());
+
+        menu.findItem(R.id.action_settings).setIcon(
+                new IconDrawable(this, Iconify.IconValue.fa_wrench)
+                        .colorRes(android.R.color.holo_blue_light)
+                        .actionBarSize());
         return true;
     }
 
@@ -106,8 +115,69 @@ public class FeedActivity extends Activity {
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             return true;
+        } else if (id == R.id.action_refresh) {
+            Toast.makeText(this, "Refreshing feed...", Toast.LENGTH_SHORT).show();
+            refreshFeed();
+        } else if(id == R.id.action_logout) {
+            AlertDialog dialog = new AlertDialog.Builder(this)
+                    .setTitle("Confirm Logout?")
+                    .setMessage("Are you sure you want to log out from the BlueFletch Feed?")
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            sessionManager.terminateSession();
+
+                                            dialog.dismiss();
+
+                                            Intent i = new Intent();
+                                            i.setClass(FeedActivity.this, MainActivity.class);
+                                            startActivity(i);
+
+                                            FeedActivity.this.finish();
+                                        }
+                                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .create();
+            dialog.show();
         }
+
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Helper method to refresh the feed.  Assumes a service object has already been instantiated.
+     */
+    private void refreshFeed() {
+        feedService.feed(null, new Callback<List<Post>>() {
+            @Override
+            public void success(List<Post> posts, Response response) {
+                Log.i(TAG, "Received " + posts.size() + " posts from the feed service.");
+
+                Context context = getApplicationContext();
+                try {
+                    ListView listView = (ListView) findViewById(R.id.listViewPostFeed);
+                    CustomListViewAdapter adapter = new CustomListViewAdapter(context,
+                            R.layout.post_item, posts);
+                    listView.setAdapter(adapter);
+                }
+                catch(Exception e)
+                {
+                    Toast toastError = Toast.makeText(context, "Feed load failed.", Toast.LENGTH_LONG);
+                    toastError.show();
+                }
+
+            }
+
+            @Override
+            public void failure(RetrofitError retrofitError) {
+                Log.e(TAG, "There was an error retrieving posts from the feed.");
+            }
+        });
     }
 
 }
