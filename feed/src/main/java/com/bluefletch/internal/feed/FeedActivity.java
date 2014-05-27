@@ -1,42 +1,47 @@
 package com.bluefletch.internal.feed;
 
 import android.app.Activity;
-import android.app.ActionBar;
 import android.app.AlertDialog;
-import android.app.Fragment;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.os.Build;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.bluefletch.internal.feed.adapter.PostArrayAdapter;
 import com.bluefletch.internal.feed.rest.FeedRequestInterceptor;
 import com.bluefletch.internal.feed.rest.FeedService;
 import com.bluefletch.internal.feed.rest.Post;
 import com.joanzapata.android.iconify.IconDrawable;
 import com.joanzapata.android.iconify.Iconify;
+import com.bluefletch.internal.feed.util.ISO8601;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.TimeZone;
 
 import retrofit.Callback;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
+import retrofit.converter.GsonConverter;
 
 /**
  * Skeleton feed activity - contains an action bar with a logout and refresh icon (currently do nothing),
  * performs a feed lookup on creation.  Also handles situations where the user becomes logged out but
  * somehow gets back to this view.
- *
- * TODO: Present the feed, implement the action bar buttons, etc.  Consider extending ListActivity for easy presentation!!!
  */
 public class FeedActivity extends Activity {
 
@@ -46,21 +51,53 @@ public class FeedActivity extends Activity {
 
     private FeedService feedService;
 
+    private ListView listView;
+
+    private PostArrayAdapter postArrayAdapter;
+
+    private ISO8601 iso8601;
+
+    private final Integer DEFAULT_DAYS_BACK = 14;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed);
 
+        final Context context = this;
+
+        this.iso8601 = new ISO8601();
+
+        listView = (ListView) findViewById(R.id.list);
+
         sessionManager = new SessionManager(this);
+
+        Gson gsonConv = new GsonBuilder()
+                .setDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+                .create();
+
 
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(getString(R.string.base_url))
                 .setRequestInterceptor(new FeedRequestInterceptor(sessionManager))
+                .setConverter(new GsonConverter(gsonConv))
                 .build();
 
         feedService = restAdapter.create(FeedService.class);
 
         refreshFeed();
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
+            @Override
+            public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3)
+            {
+                Post selectedPost = postArrayAdapter.getItem(position);
+                Intent detailsIntent = new Intent(getApplicationContext(), DetailsActivity.class);
+                detailsIntent.putExtra(getString(R.string.intent_selected_post), selectedPost);
+                startActivity(detailsIntent);
+            }
+        });
     }
 
     @Override
@@ -153,29 +190,37 @@ public class FeedActivity extends Activity {
      * Helper method to refresh the feed.  Assumes a service object has already been instantiated.
      */
     private void refreshFeed() {
-        feedService.feed(null, new Callback<List<Post>>() {
+        Calendar cal = new GregorianCalendar();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.DATE, cal.get(Calendar.DATE) - DEFAULT_DAYS_BACK);
+        String asOfDate = iso8601.fromCalendar(cal);
+        
+        feedService.feed(asOfDate, new Callback<List<Post>>() {
             @Override
             public void success(List<Post> posts, Response response) {
                 Log.i(TAG, "Received " + posts.size() + " posts from the feed service.");
-
-                Context context = getApplicationContext();
-                try {
-                    ListView listView = (ListView) findViewById(R.id.listViewPostFeed);
-                    CustomListViewAdapter adapter = new CustomListViewAdapter(context,
-                            R.layout.post_item, posts);
-                    listView.setAdapter(adapter);
-                }
-                catch(Exception e)
-                {
-                    Toast toastError = Toast.makeText(context, "Feed load failed.", Toast.LENGTH_LONG);
-                    toastError.show();
-                }
-
+                
+                ArrayList<Post> p = new ArrayList<Post>(posts);
+                postArrayAdapter = new PostArrayAdapter(context, R.layout.listitem_feed, p);
+                listView.setAdapter(postArrayAdapter);
             }
-
+            
             @Override
             public void failure(RetrofitError retrofitError) {
-                Log.e(TAG, "There was an error retrieving posts from the feed.");
+                //TODO: Handle this better
+                Log.e(TAG, "Error retrieving posts from the feed: " + retrofitError.getCause().toString());
+                
+                if (!retrofitError.isNetworkError()) {
+                    Log.i(TAG, "Not network error, so likely cookie has expired; return user to login page");
+                    sessionManager.terminateSession();
+                    startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                }
+                else {
+                    Toast toast = new Toast(context);
+                    toast.makeText(context, getString(R.string.error_connecting), Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
