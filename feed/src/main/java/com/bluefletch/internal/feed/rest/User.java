@@ -1,9 +1,11 @@
 package com.bluefletch.internal.feed.rest;
 
+import java.io.Serializable;
+
 /**
  * Created by mattmehalso on 4/3/14.
  */
-public class User {
+public class User implements Serializable {
 
     private String _id;
     private String imageUrl;

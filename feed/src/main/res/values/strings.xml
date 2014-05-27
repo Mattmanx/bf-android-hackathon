@@ -7,14 +7,16 @@
     <string name="action_logout">Log Out</string>
 
     <!-- BF Feed QA -->
-    <string name="base_url">http://bfapp-bfsharing.rhcloud.com/</string>
+    <!-- <string name="base_url">http://bfapp-bfsharing.rhcloud.com/</string> -->
 
-    <!--
-     BF Feed Prod
-     <string name="base_url"></string>
-    -->
 
-    <string name="title_activity_feed">FeedActivity</string>
-    <string name="hello_world">Hello world!</string>
+    <!-- BF Feed Prod -->
+    <string name="base_url">http://feed.bluefletch.com/</string>
+    <string name="title_activity_feed">Feed</string>
+    <string name="title_activity_details">Post Details</string>
+
+    <!-- Other Strings -->
+    <string name="intent_selected_post">IntentSelectedPost</string>
+    <string name="error_connecting">Error connecting to the feed. Please try again later.</string>
 
 </resources>

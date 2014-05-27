@@ -1,5 +1,6 @@
 package com.bluefletch.internal.feed.rest;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -28,7 +29,8 @@ import java.util.List;
  •	newPostForUser: boolean indicating whether this post will show up as “new” for the user based on when the user last logged in and/or refreshed the page  (note: may not be present if false)
 
  */
-public class Post {
+@SuppressWarnings("serial")
+public class Post implements Serializable {
 
     private String _id;
     private String createdDate;

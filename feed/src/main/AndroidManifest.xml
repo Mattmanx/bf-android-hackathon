@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.bluefletch.internal.feed" >
 
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -11,9 +11,9 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name="com.bluefletch.internal.feed.MainActivity"
+            android:excludeFromRecents="true"
             android:label="@string/app_name"
-            android:noHistory="true"
-            android:excludeFromRecents="true">
+            android:noHistory="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -23,6 +23,14 @@
         <activity
             android:name="com.bluefletch.internal.feed.FeedActivity"
             android:label="@string/title_activity_feed" >
+        </activity>
+        <activity
+            android:name="com.bluefletch.internal.feed.DetailsActivity"
+            android:label="@string/title_activity_details"
+            android:parentActivityName="com.bluefletch.internal.feed.FeedActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="FeedActivity" />
         </activity>
     </application>
 

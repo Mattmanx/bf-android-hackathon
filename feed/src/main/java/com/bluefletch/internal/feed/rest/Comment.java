@@ -1,5 +1,7 @@
 package com.bluefletch.internal.feed.rest;
 
+import java.io.Serializable;
+
 /**
  * Created by mattmehalso on 4/3/14.
  * o	_id: comment id
@@ -13,7 +15,8 @@ package com.bluefletch.internal.feed.rest;
  o	numUpdates: number of times the comment has been update
 
  */
-public class Comment {
+@SuppressWarnings("serial")
+public class Comment implements Serializable {
     private String _id;
     private String createdDate;
     private String commentText;

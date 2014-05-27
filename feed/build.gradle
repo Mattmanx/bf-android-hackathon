@@ -19,8 +19,10 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     compile 'com.squareup.retrofit:retrofit:1.5.0'
     compile 'com.joanzapata.android:android-iconify:1.+'
-
+    compile 'com.squareup.picasso:picasso:2.2.0'
+    compile 'com.android.support:support-v4:19.+'
+    compile 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
+    compile fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 }
