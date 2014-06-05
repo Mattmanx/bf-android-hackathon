@@ -14,31 +14,15 @@ import java.io.Serializable;
  o	newCommentForUser: boolean indicating whether this is a new post based on when the user last logged in and/or refreshed the page (note: may not be present if false)
  o	numUpdates: number of times the comment has been update
 
+ updated on 6/3 to make it an extension of the post class
+
  */
 @SuppressWarnings("serial")
-public class Comment implements Serializable {
-    private String _id;
-    private String createdDate;
+public class Comment extends Post {
+
     private String commentText;
     private User commentUser;
     private boolean newCommentForUser;
-    private int numUpdates;
-
-    public String get_id() {
-        return _id;
-    }
-
-    public void set_id(String _id) {
-        this._id = _id;
-    }
-
-    public String getCreatedDate() {
-        return createdDate;
-    }
-
-    public void setCreatedDate(String createdDate) {
-        this.createdDate = createdDate;
-    }
 
     public String getCommentText() {
         return commentText;
@@ -61,14 +45,6 @@ public class Comment implements Serializable {
     }
 
     public void setNewCommentForUser(boolean newCommentForUser) {
-        this.newCommentForUser = newCommentForUser;
-    }
-
-    public int getNumUpdates() {
-        return numUpdates;
-    }
-
-    public void setNumUpdates(int numUpdates) {
-        this.numUpdates = numUpdates;
+       this.newCommentForUser = newCommentForUser;
     }
 }

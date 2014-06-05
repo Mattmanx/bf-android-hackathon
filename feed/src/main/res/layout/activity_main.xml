@@ -11,7 +11,7 @@
     <ImageView
         android:layout_width="wrap_content"
         android:layout_margin="10dp"
-        android:layout_height="wrap_content"
+        android:layout_height="150dp"
         android:id="@+id/imageView"
         android:src="@drawable/logo"/>
 
@@ -20,6 +20,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Username"
+        android:inputType="text"
+        android:imeOptions="actionNext"
         android:layout_margin="10dp"/>
 
     <EditText
@@ -27,6 +29,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Password"
+        android:imeOptions="actionGo"
         android:inputType="textPassword"
         android:layout_margin="10dp"/>
 
@@ -36,6 +39,12 @@
         android:layout_height="wrap_content"
         android:text="Log In"
         android:layout_margin="10dp"
-        android:paddingTop="30dp"
-        android:paddingBottom="30dp"/>
+        android:layout_marginTop="30dp"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
+        android:textSize="20dp"
+        android:background="@android:color/holo_blue_dark"
+        android:textColor="@android:color/background_light"
+        android:singleLine="false"
+        android:textAppearance="@android:style/TextAppearance.Holo.Widget.Button" />
 </LinearLayout>

@@ -1,6 +1,7 @@
 package com.bluefletch.internal.feed.rest;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -33,13 +34,16 @@ import java.util.List;
 public class Post implements Serializable {
 
     private String _id;
-    private String createdDate;
+    private Date createdDate;
     private String lastUpdatedDate;
     private String postText;
     private String originalPostText;
     private int numUpdates;
     private User postUser;
     private boolean newPostForUser;
+
+
+    private boolean didJustAdd;
     List<Comment> comments;
 
     public String get_id() {
@@ -50,11 +54,11 @@ public class Post implements Serializable {
         this._id = _id;
     }
 
-    public String getCreatedDate() {
+    public Date getCreatedDate() {
         return createdDate;
     }
 
-    public void setCreatedDate(String createdDate) {
+    public void setCreatedDate(Date createdDate) {
         this.createdDate = createdDate;
     }
 
@@ -112,5 +116,13 @@ public class Post implements Serializable {
 
     public void setComments(List<Comment> comments) {
         this.comments = comments;
+    }
+
+    public boolean isDidJustAdd() {
+        return didJustAdd;
+    }
+
+    public void setDidJustAdd(boolean didJustAdd) {
+        this.didJustAdd = didJustAdd;
     }
 }

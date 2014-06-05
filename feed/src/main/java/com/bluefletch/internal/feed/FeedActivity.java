@@ -2,123 +2,102 @@ package com.bluefletch.internal.feed;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-
-import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
+import android.widget.AbsListView;
+import android.widget.EditText;
+import android.widget.IconButton;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.bluefletch.internal.feed.adapter.PostArrayAdapter;
-import com.bluefletch.internal.feed.rest.FeedRequestInterceptor;
-import com.bluefletch.internal.feed.rest.FeedService;
 import com.bluefletch.internal.feed.rest.Post;
+import com.bluefletch.internal.feed.service.BusProvider;
 import com.joanzapata.android.iconify.IconDrawable;
 import com.joanzapata.android.iconify.Iconify;
-import com.bluefletch.internal.feed.util.ISO8601;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.nhaarman.listviewanimations.itemmanipulation.AnimateAdditionAdapter;
+import com.squareup.otto.Bus;
+import com.squareup.otto.Subscribe;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import org.joda.time.DateTime;
+
 import java.util.List;
-import java.util.TimeZone;
 
-import retrofit.Callback;
-import retrofit.RestAdapter;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
-import retrofit.converter.GsonConverter;
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+import butterknife.OnClick;
+import timber.log.Timber;
+import static com.bluefletch.internal.feed.service.AppEvents.*;
 
 /**
  * Skeleton feed activity - contains an action bar with a logout and refresh icon (currently do nothing),
  * performs a feed lookup on creation.  Also handles situations where the user becomes logged out but
  * somehow gets back to this view.
  */
-public class FeedActivity extends Activity {
+public class FeedActivity extends Activity implements SwipeRefreshLayout.OnRefreshListener {
 
-    private static final String TAG = FeedActivity.class.getSimpleName();
+    @InjectView(R.id.list) protected ListView listView;
+    @InjectView(R.id.container) protected SwipeRefreshLayout swipeLayout;
+    @InjectView(R.id.add_post_text_input) protected EditText postTextInput;
+    @InjectView(R.id.save_post_button) protected IconButton saveButton;
 
-    private SessionManager sessionManager;
 
-    private FeedService feedService;
-
-    private ListView listView;
-
-    private PostArrayAdapter postArrayAdapter;
-
-    private ISO8601 iso8601;
-
+    private Bus mBus = BusProvider.getInstance();
     private final Integer DEFAULT_DAYS_BACK = 14;
+
+    private AnimateAdditionAdapter<String> mAnimateAdditionAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed);
 
-        final Context context = this;
 
-        this.iso8601 = new ISO8601();
+        ButterKnife.inject(this);
 
-        listView = (ListView) findViewById(R.id.list);
+        swipeLayout.setOnRefreshListener(this);
+        swipeLayout.setColorScheme(android.R.color.holo_blue_bright,
+                android.R.color.holo_blue_dark,
+                android.R.color.holo_blue_light,
+                android.R.color.background_dark);
 
-        sessionManager = new SessionManager(this);
-
-        Gson gsonConv = new GsonBuilder()
-                .setDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-                .create();
-
-
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint(getString(R.string.base_url))
-                .setRequestInterceptor(new FeedRequestInterceptor(sessionManager))
-                .setConverter(new GsonConverter(gsonConv))
-                .build();
-
-        feedService = restAdapter.create(FeedService.class);
-
-        refreshFeed();
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
+        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
-            public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3)
-            {
-                Post selectedPost = postArrayAdapter.getItem(position);
-                Intent detailsIntent = new Intent(getApplicationContext(), DetailsActivity.class);
-                detailsIntent.putExtra(getString(R.string.intent_selected_post), selectedPost);
-                startActivity(detailsIntent);
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                int topRowVerticalPosition =
+                        (listView == null || listView.getChildCount() == 0) ?
+                                0 : listView.getChildAt(0).getTop();
+                swipeLayout.setEnabled(topRowVerticalPosition >= 0);
             }
         });
+
+        refreshFeed();
+    }
+
+    @Override
+    public void onRefresh() {
+        refreshFeed();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mBus.unregister(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
-        //every time we come back to feed, make sure we're still logged in.  if not, let's present the
-        //user with an error and go back to the login activity.
-        if(sessionManager.getUser() == null) {
-            new AlertDialog.Builder(this)
-                    .setCancelable(false)
-                    .setTitle("Logged Out")
-                    .setMessage("You have been logged out. Please tap OK to return to the login screen " +
-                            "and log in again.")
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-
-                        }
-                    }).create().show();
-        }
+        mBus.register(this);
+        mBus.post(new ValidateAuthenticationEvent(false));
     }
 
     @Override
@@ -132,17 +111,13 @@ public class FeedActivity extends Activity {
                         .colorRes(android.R.color.holo_blue_light)
                         .actionBarSize());
 
-        menu.findItem(R.id.action_refresh).setIcon(
-                new IconDrawable(this, Iconify.IconValue.fa_refresh)
-                        .colorRes(android.R.color.holo_blue_light)
-                        .actionBarSize());
-
         menu.findItem(R.id.action_settings).setIcon(
                 new IconDrawable(this, Iconify.IconValue.fa_wrench)
                         .colorRes(android.R.color.holo_blue_light)
                         .actionBarSize());
         return true;
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -152,27 +127,18 @@ public class FeedActivity extends Activity {
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             return true;
-        } else if (id == R.id.action_refresh) {
-            Toast.makeText(this, "Refreshing feed...", Toast.LENGTH_SHORT).show();
-            refreshFeed();
         } else if(id == R.id.action_logout) {
             AlertDialog dialog = new AlertDialog.Builder(this)
                     .setTitle("Confirm Logout?")
                     .setMessage("Are you sure you want to log out from the BlueFletch Feed?")
                     .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            sessionManager.terminateSession();
-
-                                            dialog.dismiss();
-
-                                            Intent i = new Intent();
-                                            i.setClass(FeedActivity.this, MainActivity.class);
-                                            startActivity(i);
-
-                                            FeedActivity.this.finish();
-                                        }
-                                    })
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            mBus.post(new LogoutEvent());
+                            dialog.dismiss();
+                            FeedActivity.this.finish();
+                        }
+                    })
                     .setNegativeButton("No", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -186,43 +152,75 @@ public class FeedActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+
+    private Toast saveToast;
+
+    @OnClick(R.id.save_post_button)
+    protected void onSaveClicked() {
+        final String text = postTextInput.getText().toString();
+        if (text.isEmpty()) {
+            Toast.makeText(FeedActivity.this, "Please add some valid text", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        saveButton.setEnabled(false);
+        saveToast = Toast.makeText(FeedActivity.this, "Saving..", Toast.LENGTH_LONG);
+        saveToast.show();
+        mBus.post(new CreatePostEvent(text));
+    }
+    @Subscribe
+    public void onNewPostCreated(PostCreatedEvent ev){
+        ev.getPost().setDidJustAdd(true);
+        ((AnimateAdditionAdapter<Post>) listView.getAdapter()).insert(0, ev.getPost());
+
+        postTextInput.setText(null);
+        saveButton.setEnabled(true);
+        saveToast.cancel();
+    }
+    @Subscribe
+    public void onNewPostFailed(PostCreateError ev){
+
+        postTextInput.setText(null);
+        saveButton.setEnabled(true);
+        saveToast.cancel();
+
+        if (!ev.getError().isNetworkError()) {
+            Toast.makeText(FeedActivity.this, "Error saving post", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Toast.makeText(FeedActivity.this, R.string.error_connecting, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private Toast refreshToast;
+    @Subscribe
+    public void feedLoaded(FeedLoadedEvent event) {
+        List<Post> posts = event.getPosts();
+        Timber.i("Received %s posts from the feed service.", posts.size());
+        PostArrayAdapter adapter = new PostArrayAdapter(FeedActivity.this, R.layout.post_item, posts);
+        AnimateAdditionAdapter<Post> animationAdapter = new AnimateAdditionAdapter<Post>(adapter);
+        animationAdapter.setListView(listView);
+        listView.setAdapter(animationAdapter);
+
+        refreshToast.cancel();
+        swipeLayout.setRefreshing(false);
+    }
+    @Subscribe
+    public void feedError(FeedLoadedError event){
+        refreshToast.cancel();
+        swipeLayout.setRefreshing(false);
+        Toast.makeText(FeedActivity.this, R.string.error_connecting, Toast.LENGTH_SHORT).show();
+    }
     /**
      * Helper method to refresh the feed.  Assumes a service object has already been instantiated.
      */
     private void refreshFeed() {
-        Calendar cal = new GregorianCalendar();
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.DATE, cal.get(Calendar.DATE) - DEFAULT_DAYS_BACK);
-        String asOfDate = iso8601.fromCalendar(cal);
-        
-        feedService.feed(asOfDate, new Callback<List<Post>>() {
-            @Override
-            public void success(List<Post> posts, Response response) {
-                Log.i(TAG, "Received " + posts.size() + " posts from the feed service.");
-                
-                ArrayList<Post> p = new ArrayList<Post>(posts);
-                postArrayAdapter = new PostArrayAdapter(context, R.layout.listitem_feed, p);
-                listView.setAdapter(postArrayAdapter);
-            }
-            
-            @Override
-            public void failure(RetrofitError retrofitError) {
-                //TODO: Handle this better
-                Log.e(TAG, "Error retrieving posts from the feed: " + retrofitError.getCause().toString());
-                
-                if (!retrofitError.isNetworkError()) {
-                    Log.i(TAG, "Not network error, so likely cookie has expired; return user to login page");
-                    sessionManager.terminateSession();
-                    startActivity(new Intent(getApplicationContext(), MainActivity.class));
-                }
-                else {
-                    Toast toast = new Toast(context);
-                    toast.makeText(context, getString(R.string.error_connecting), Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        swipeLayout.setRefreshing(true);
+        refreshToast = Toast.makeText(FeedActivity.this, R.string.refreshing, Toast.LENGTH_SHORT);
+        refreshToast.show();
+
+        DateTime ago = DateTime.now().withTimeAtStartOfDay().minusDays(DEFAULT_DAYS_BACK);
+        BusProvider.getInstance().post(new LoadFeedEvent(ago));
     }
 
 }

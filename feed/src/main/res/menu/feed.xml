@@ -2,16 +2,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.bluefletch.internal.feed.FeedActivity" >
 
-    <item android:id="@+id/action_refresh"
-        android:title="@string/action_refresh"
-        android:showAsAction="always"/>
-
     <item android:id="@+id/action_logout"
         android:title="@string/action_logout"
         android:showAsAction="always"/>
 
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
-        android:showAsAction="always"
+        android:showAsAction="ifRoom"
         android:orderInCategory="100"/>
 </menu>
