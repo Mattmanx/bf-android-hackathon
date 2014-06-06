@@ -17,6 +17,7 @@ import com.urbanairship.UAirship;
 import com.urbanairship.push.PushManager;
 
 import retrofit.RestAdapter;
+import retrofit.android.AndroidLog;
 import retrofit.converter.GsonConverter;
 import timber.log.Timber;
 
@@ -51,7 +52,6 @@ public class FeedApp extends Application {
     }
 
     private FeedAPI buildApi(SessionManager sessionManager) {
-
         Gson gsonConv = new GsonBuilder()
                 .setDateFormat("yyyy-MM-dd'T'HH:mm:ss")
                 .create();
@@ -59,6 +59,8 @@ public class FeedApp extends Application {
         return new RestAdapter.Builder()
                 .setEndpoint(getString(R.string.base_url))
                 .setRequestInterceptor(new FeedRequestInterceptor(sessionManager))
+                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setLog(new AndroidLog("FeedAPI"))
                 .setConverter(new GsonConverter(gsonConv))
                 .build()
                 .create(FeedAPI.class);

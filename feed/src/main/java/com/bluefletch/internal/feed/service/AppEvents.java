@@ -4,6 +4,7 @@ import com.bluefletch.internal.feed.rest.Post;
 
 import org.joda.time.DateTime;
 
+import java.io.File;
 import java.util.List;
 
 import retrofit.RetrofitError;
@@ -138,6 +139,7 @@ public class AppEvents {
 
     public static class CreatePostEvent {
         private String text;
+        private String replyToId;
 
         public CreatePostEvent(String text) {
             this.text = text;
@@ -149,6 +151,14 @@ public class AppEvents {
 
         public void setText(String text) {
             this.text = text;
+        }
+
+        public void setReplyToId(String replyToId) {
+            this.replyToId = replyToId;
+        }
+
+        public String getReplyToId() {
+            return replyToId;
         }
     }
     public static class PostCreatedEvent {
@@ -170,6 +180,29 @@ public class AppEvents {
     public static class PostCreateError extends FeedLoadedError {
         public PostCreateError(RetrofitError err) {
             super(err);
+        }
+    }
+
+
+    public static class UploadProfilePictureEvent {
+        private String imagePath;
+
+        public UploadProfilePictureEvent(String imagePath) {
+            this.imagePath = imagePath;
+        }
+
+        public String getImagePath() {
+            return imagePath;
+        }
+
+        public void setImagePath(String imagePath) {
+            this.imagePath = imagePath;
+        }
+    }
+    public static class ProfilePictureUpdated {}
+    public static class ProfilePictureError extends FeedLoadedError {
+        public ProfilePictureError(RetrofitError err) {
+            super (err);
         }
     }
 }

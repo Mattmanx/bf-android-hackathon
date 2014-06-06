@@ -1,6 +1,7 @@
 package com.bluefletch.internal.feed.service;
 
 import com.bluefletch.internal.feed.SessionManager;
+import com.bluefletch.internal.feed.rest.Comment;
 import com.bluefletch.internal.feed.rest.FeedAPI;
 import com.bluefletch.internal.feed.rest.Post;
 import com.bluefletch.internal.feed.rest.User;
@@ -11,6 +12,7 @@ import com.urbanairship.push.PushManager;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +21,8 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Header;
 import retrofit.client.Response;
+import retrofit.mime.TypedByteArray;
+import retrofit.mime.TypedFile;
 import timber.log.Timber;
 
 import static com.bluefletch.internal.feed.service.AppEvents.*;
@@ -128,20 +132,57 @@ public class FeedService {
     }
     @Subscribe
     public void createPost(CreatePostEvent event){
-        mApi.createPost(event.getText(), sessionManager.getUser().getUsername(), new Callback<Post>() {
+        if (event.getReplyToId() != null) {
+            mApi.createComment(event.getText(), event.getReplyToId(),
+                    sessionManager.getUser().getUsername(), new Callback<Comment>() {
+                @Override
+                public void success(Comment post, Response response) {
+                    Timber.i("Saved Comment.");
+                    mBus.post(new PostCreatedEvent(post));
+                }
+
+                @Override
+                public void failure(RetrofitError retrofitError) {
+                    Timber.e("Error saving post to the feed: %s", retrofitError.getCause());
+                    mBus.post(new PostCreateError(retrofitError));
+                }
+            });
+        } else {
+            mApi.createPost(event.getText(), sessionManager.getUser().getUsername(), new Callback<Post>() {
+                @Override
+                public void success(Post post, Response response) {
+                    Timber.i("Saved Post.");
+                    mBus.post(new PostCreatedEvent(post));
+                }
+
+                @Override
+                public void failure(RetrofitError retrofitError) {
+                    Timber.e("Error saving post to the feed: %s", retrofitError.getCause());
+                    mBus.post(new PostCreateError(retrofitError));
+                }
+            });
+        }
+    }
+
+    @Subscribe
+    public void uploadProfilePicture(UploadProfilePictureEvent event){
+        TypedFile file = new TypedFile("image/jpeg", new File(event.getImagePath()));
+
+        mApi.uploadProfilePicture(sessionManager.getUser().getUsername(), file, new Callback<User>() {
             @Override
-            public void success(Post post, Response response) {
-                Timber.i("Saved Post.");
-                mBus.post(new PostCreatedEvent(post));
+            public void success(User user, Response response) {
+                Timber.i("Saved profile picture.");
+                mBus.post(new ProfilePictureUpdated());
             }
 
             @Override
             public void failure(RetrofitError retrofitError) {
-                Timber.e("Error saving post to the feed: %s", retrofitError.getCause());
-                mBus.post(new PostCreateError(retrofitError));
+                Timber.e("Error saving a users profile picture: %s", retrofitError);
+                mBus.post(new ProfilePictureError(retrofitError));
             }
         });
     }
+
 
     public SessionManager getSessionManager(){
         return sessionManager;
