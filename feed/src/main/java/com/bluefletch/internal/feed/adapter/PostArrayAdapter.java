@@ -101,7 +101,10 @@ public class PostArrayAdapter extends ArrayAdapter<Post> implements AnimateAddit
         Post post = getItem(position);
         holder.loadPost(post);
 
-        boolean isNewPost = position == 0 || post.isNewPostForUser();
+        boolean isNewPost = post.isNewPostForUser();
+        if (post instanceof Comment)
+            isNewPost = ((Comment)post).isNewCommentForUser();
+
         int color = isNewPost ? Color.parseColor("#E5FFFF")
                     : convertView.getResources().getColor(android.R.color.white);
         convertView.setBackgroundColor(color);

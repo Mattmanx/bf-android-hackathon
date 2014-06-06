@@ -44,6 +44,7 @@ public class IntentReceiver extends BroadcastReceiver {
             Intent launch = new Intent(Intent.ACTION_MAIN);
             launch.setClass(UAirship.shared().getApplicationContext(), MainActivity.class);
             launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            launch.putExtra(MainActivity.INTENT_EXTRA_SHOULD_REFRESH, true);
 
             UAirship.shared().getApplicationContext().startActivity(launch);
 

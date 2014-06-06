@@ -13,6 +13,8 @@ import android.text.Html;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AbsListView;
 import android.widget.EditText;
 import android.widget.IconButton;
@@ -29,6 +31,7 @@ import com.bluefletch.internal.feed.service.ResizeImageAsyncTask;
 import com.joanzapata.android.iconify.IconDrawable;
 import com.joanzapata.android.iconify.Iconify;
 import com.nhaarman.listviewanimations.itemmanipulation.AnimateAdditionAdapter;
+import com.nhaarman.listviewanimations.swinginadapters.AnimationAdapter;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 
@@ -73,7 +76,7 @@ public class FeedActivity extends Activity implements SwipeRefreshLayout.OnRefre
     private Bus mBus = BusProvider.getInstance();
     private final Integer DEFAULT_DAYS_BACK = 14;
 
-    private AnimateAdditionAdapter<String> mAnimateAdditionAdapter;
+    private AnimateAdditionAdapter<Post> mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,7 +112,27 @@ public class FeedActivity extends Activity implements SwipeRefreshLayout.OnRefre
 
     private void hideReplyBox(){
         replyPosition = -1;
-        replyText.setVisibility(View.GONE);
+        replyText.clearAnimation();
+        Animation animation = AnimationUtils.loadAnimation(FeedActivity.this, R.anim.up_to_top);
+        animation.setFillAfter(true);
+        animation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                replyText.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        replyText.clearAnimation();
+        replyText.startAnimation(animation);
         postTextInput.setHint("Add a post");
 
     }
@@ -130,7 +153,14 @@ public class FeedActivity extends Activity implements SwipeRefreshLayout.OnRefre
         String text = isComment ? ((Comment)p).getCommentText() : p.getPostText();
         replyText.setText(Html.fromHtml(String.format("Reply to <b>@%s</b><em>: %s</em>",
                 user.getUsername(), text)));
-        replyText.setVisibility(View.VISIBLE);
+
+        if (replyText.getVisibility() == View.GONE) {
+            Animation animation = AnimationUtils.loadAnimation(FeedActivity.this, R.anim.down_from_top);
+            animation.setFillAfter(true);
+            replyText.clearAnimation();
+            replyText.startAnimation(animation);
+            replyText.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -149,6 +179,10 @@ public class FeedActivity extends Activity implements SwipeRefreshLayout.OnRefre
         super.onResume();
         mBus.register(this);
         mBus.post(new ValidateAuthenticationEvent(false));
+        if (getIntent().getBooleanExtra(MainActivity.INTENT_EXTRA_SHOULD_REFRESH, false)) {
+            getIntent().putExtra(MainActivity.INTENT_EXTRA_SHOULD_REFRESH, false);
+            refreshFeed();
+        }
     }
 
     @Override
@@ -288,7 +322,7 @@ public class FeedActivity extends Activity implements SwipeRefreshLayout.OnRefre
         int position = 0;
         if (replyPosition != -1) position = replyPosition+1;
 
-        ((AnimateAdditionAdapter<Post>) listView.getAdapter()).insert(position, ev.getPost());
+        mAdapter.insert(position, ev.getPost());
         hideReplyBox();
         postTextInput.setText(null);
         saveButton.setEnabled(true);
@@ -315,9 +349,9 @@ public class FeedActivity extends Activity implements SwipeRefreshLayout.OnRefre
         List<Post> posts = event.getPosts();
         Timber.i("Received %s posts from the feed service.", posts.size());
         PostArrayAdapter adapter = new PostArrayAdapter(FeedActivity.this, R.layout.post_item, posts);
-        AnimateAdditionAdapter<Post> animationAdapter = new AnimateAdditionAdapter<Post>(adapter);
-        animationAdapter.setListView(listView);
-        listView.setAdapter(animationAdapter);
+        mAdapter = new AnimateAdditionAdapter<Post>(adapter);
+        mAdapter.setListView(listView);
+        listView.setAdapter(mAdapter);
 
         refreshToast.cancel();
         swipeLayout.setRefreshing(false);

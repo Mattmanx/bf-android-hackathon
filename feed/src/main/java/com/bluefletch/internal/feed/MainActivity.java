@@ -26,6 +26,8 @@ import static com.bluefletch.internal.feed.service.AppEvents.OnAuthenticatedEven
 import static com.bluefletch.internal.feed.service.AppEvents.ValidateAuthenticationEvent;
 
 public class MainActivity extends Activity implements TextView.OnEditorActionListener {
+
+    public static String INTENT_EXTRA_SHOULD_REFRESH = "ShouldRefreshOnLoad";
      //ui elements
     @InjectView(R.id.username) EditText username;
     @InjectView(R.id.password) EditText password;
@@ -62,7 +64,12 @@ public class MainActivity extends Activity implements TextView.OnEditorActionLis
         if (progressDialog != null)
             progressDialog.dismiss();
 
-        startActivity(new Intent(this, FeedActivity.class));
+        Intent feedActivity = new Intent(this, FeedActivity.class);
+
+        if (getIntent().getBooleanExtra(MainActivity.INTENT_EXTRA_SHOULD_REFRESH, false)) {
+            feedActivity.putExtra(MainActivity.INTENT_EXTRA_SHOULD_REFRESH, true);
+        }
+        startActivity(feedActivity);
     }
 
 
