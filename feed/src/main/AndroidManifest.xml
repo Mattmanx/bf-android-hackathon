@@ -3,6 +3,7 @@
     package="com.bluefletch.internal.feed" >
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <permission
         android:name="com.bluefletch.internal.feed.permission.UA_DATA"
@@ -52,11 +53,6 @@
             android:name=".FeedActivity"
             android:label="@string/title_activity_feed"
             android:launchMode="singleTop" >
-        </activity>
-
-        <activity
-            android:name=".MainActivity2"
-            android:label="@string/title_activity_main_activity2" >
         </activity>
 
         <!-- Required for the UrbanAirship library -->

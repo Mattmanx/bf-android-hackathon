@@ -8,6 +8,7 @@ import retrofit.http.FormUrlEncoded;
 import retrofit.http.GET;
 import retrofit.http.Multipart;
 import retrofit.http.POST;
+import retrofit.http.PUT;
 import retrofit.http.Part;
 import retrofit.http.Path;
 import retrofit.http.Query;
@@ -71,6 +72,6 @@ public interface FeedAPI {
      * @param cb
      */
     @Multipart
-    @POST("/user/{username}/profilepic")
+    @PUT("/user/{username}/profilepic")
     void uploadProfilePicture(@Path("username") String username, @Part("imageFile") TypedFile photo, Callback<User> cb);
 }
