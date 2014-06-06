@@ -175,6 +175,16 @@ public class FeedActivity extends Activity implements SwipeRefreshLayout.OnRefre
     }
 
     @Override
+    public void onBackPressed() {
+        if (replyText.getVisibility() == View.VISIBLE) {
+            hideReplyBox();
+        }
+        else{
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         mBus.register(this);
