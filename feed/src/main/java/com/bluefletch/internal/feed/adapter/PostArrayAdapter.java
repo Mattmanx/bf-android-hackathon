@@ -1,6 +1,7 @@
 package com.bluefletch.internal.feed.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bluefletch.internal.feed.FeedActivity;
 import com.bluefletch.internal.feed.R;
 import com.bluefletch.internal.feed.rest.Comment;
 import com.bluefletch.internal.feed.rest.Post;
@@ -27,15 +29,17 @@ import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import timber.log.Timber;
 
 /**
  * Created by Bryan on 4/5/14.
  */
 public class PostArrayAdapter extends ArrayAdapter<Post> implements AnimateAdditionAdapter.Insertable<Post> {
 
-
-    public PostArrayAdapter(Context context, int textViewResourceId, List<Post> posts) {
+    private final FeedActivity feedActivity;
+    public PostArrayAdapter(FeedActivity context, int textViewResourceId, List<Post> posts) {
         super(context,textViewResourceId, posts);
+        feedActivity = context;
         List<Post> inflated = new ArrayList<Post>();
 
         for (Post post : posts) {
@@ -71,7 +75,7 @@ public class PostArrayAdapter extends ArrayAdapter<Post> implements AnimateAddit
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
 
         // take data from cursor and put it in the view
@@ -97,12 +101,23 @@ public class PostArrayAdapter extends ArrayAdapter<Post> implements AnimateAddit
         Post post = getItem(position);
         holder.loadPost(post);
 
-        /*
-        if (post.isDidJustAdd()) {
-            post.setDidJustAdd(false);
-            Animation animation = AnimationUtils.loadAnimation(getContext(), R.anim.down_from_top);
-            convertView.startAnimation(animation);
-        }*/
+        boolean isNewPost = position == 0 || post.isNewPostForUser();
+        int color = isNewPost ? Color.parseColor("#E5FFFF")
+                    : convertView.getResources().getColor(android.R.color.white);
+        convertView.setBackgroundColor(color);
+
+
+        //try to hack around autoLink=web bug in textviews.
+        //Basically, that will capture all clicks and prevent a list onItemClickListener from firing
+        //this process will manually forward click events
+        final View v = convertView;
+        holder.postText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Timber.i("Triggering click event for row %s", position);
+                feedActivity.onRowClick(v, position);
+            }
+        });
 
         return convertView;
     }

@@ -23,6 +23,7 @@ import android.widget.Toast;
 import com.bluefletch.internal.feed.adapter.PostArrayAdapter;
 import com.bluefletch.internal.feed.rest.Comment;
 import com.bluefletch.internal.feed.rest.Post;
+import com.bluefletch.internal.feed.rest.User;
 import com.bluefletch.internal.feed.service.BusProvider;
 import com.bluefletch.internal.feed.service.ResizeImageAsyncTask;
 import com.joanzapata.android.iconify.IconDrawable;
@@ -114,7 +115,7 @@ public class FeedActivity extends Activity implements SwipeRefreshLayout.OnRefre
     }
     private int replyPosition = -1;
     @OnItemClick(R.id.list)
-    protected void onRowClick(View v, int position){
+    public void onRowClick(View v, int position){
         if (position == replyPosition) {
             hideReplyBox();
             return;
@@ -124,12 +125,14 @@ public class FeedActivity extends Activity implements SwipeRefreshLayout.OnRefre
         postTextInput.setHint("Add your comment");
 
         Post p = (Post) listView.getAdapter().getItem(position);
-
+        boolean isComment = p instanceof Comment;
+        User user = isComment ? ((Comment)p).getCommentUser() : p.getPostUser();
+        String text = isComment ? ((Comment)p).getCommentText() : p.getPostText();
         replyText.setText(Html.fromHtml(String.format("Reply to <b>@%s</b><em>: %s</em>",
-                p.getPostUser().getUsername(), p.getPostText())));
+                user.getUsername(), text)));
         replyText.setVisibility(View.VISIBLE);
-
     }
+
     @Override
     public void onRefresh() {
         refreshFeed();
@@ -336,5 +339,4 @@ public class FeedActivity extends Activity implements SwipeRefreshLayout.OnRefre
         DateTime ago = DateTime.now().withTimeAtStartOfDay().minusDays(DEFAULT_DAYS_BACK);
         BusProvider.getInstance().post(new LoadFeedEvent(ago));
     }
-
 }

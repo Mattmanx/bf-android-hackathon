@@ -13,11 +13,8 @@
         android:background="@android:color/transparent"
         android:baselineAlignBottom="false"
         android:focusable="false"
-        android:focusableInTouchMode="false"
         android:cropToPadding="false"
-        android:clickable="false"
         android:adjustViewBounds="false"
-        android:longClickable="false"
         android:scaleType="fitXY"
         android:contentDescription="@string/post_item_profile_alt"
         android:layout_marginLeft="30dp" />
@@ -28,6 +25,7 @@
         android:textAppearance="@android:style/TextAppearance.DeviceDefault.Medium"
         android:text="User Name"
         android:id="@+id/userNamePost"
+        android:focusable="false"
         android:phoneNumber="false"
         android:textColor="@android:color/holo_blue_dark"
         android:layout_alignParentTop="true"
@@ -36,7 +34,7 @@
         android:minLines="1"
         android:gravity="fill_horizontal"
         android:lines="1"
-        android:longClickable="true" />
+        />
 
     <TextView
         android:layout_width="wrap_content"
@@ -48,6 +46,7 @@
         android:layout_alignEnd="@+id/postText"
         android:layout_alignParentEnd="false"
         android:layout_alignParentTop="false"
+        android:focusable="false"
         android:layout_alignBottom="@+id/userNamePost" />
 
     <TextView
@@ -62,6 +61,6 @@
         android:layout_alignLeft="@+id/userNamePost"
         android:layout_marginTop="5dp"
         android:layout_below="@+id/userNamePost"
-        android:autoText="false"
-        android:autoLink="all" />
+        android:focusable="false"
+        android:autoLink="web" />
 </RelativeLayout>

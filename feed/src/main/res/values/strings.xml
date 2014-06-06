@@ -7,9 +7,9 @@
     <string name="action_logout">Log Out</string>
 
     <!-- BF Feed QA -->
-    <string name="base_url">http://bfapp-bfsharing.rhcloud.com/</string>
+    <!--string name="base_url">http://bfapp-bfsharing.rhcloud.com/</string!-->
     <!-- BF Feed Prod -->
-    <!-- string name="base_url">http://feed.bluefletch.com/</string! -->
+    <string name="base_url">http://feed.bluefletch.com/</string>
 
     <string name="title_activity_feed">Feed</string>
     <string name="title_activity_details">Post Details</string>
